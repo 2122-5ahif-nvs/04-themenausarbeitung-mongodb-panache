@@ -17,25 +17,24 @@ ifndef::backend[:backend: html5]
 * Replica Set
 * Sharded Cluster
 
-
-=== Sharded Cluster
+== Sharded Cluster
 
 * Datensätze werden auf Instanzen aufgeteilt
 * Ein Shard kann auch ein Replica Set sein
 
-==== Aufbau
+=== Aufbau
 
-image::images/sc.png[cluster]
+image::sc.png[]
 
-=== Replica Set
+== Replica Set
 
 * Kopie mehrerer MongoDB server instanzen
 * Hohe Verfügbarkeit und Redundanz
 
-==== Aufbau
+=== Aufbau
 
-image::images/rs.png[cluster]
+image::rs.png[]
 
-==== Aufbau
+=== Aufbau
 
-image::images/rs2.png[cluster]
+image::rs2.png[]
