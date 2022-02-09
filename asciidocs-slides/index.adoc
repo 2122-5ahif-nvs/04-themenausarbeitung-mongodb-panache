@@ -1,33 +1,41 @@
-= Demo-Presentation1
-Thomas W. Stütz
-1.0, 2020-08-22
+= MongoDB 🤝 Panache
+Polleichtner Moritz
+1.0, 2022-02-10
 ifndef::sourcedir[:sourcedir: ../src/main/java]
 ifndef::imagesdir[:imagesdir: images]
 ifndef::backend[:backend: html5]
 :icons: font
 
-== First Slide
+== MongoDB
 
-* aaa
-* bbb
-* ccc [red]#red text#
+* Open-Source
+* NoSQL
+* Dokumentenorientiert
 
-=== Second Slide
+== MongoDB Cluster
 
-[plantuml,cld,png]
-----
-@startuml
-class Person {
-brand: String
-type: String
-}
-@enduml
-----
+* Replica Set
+* Sharded Cluster
 
-== Third Slide
 
-image:https://images.pexels.com/photos/3966425/pexels-photo-3966425.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940[VW]
+=== Sharded Cluster
 
-== Fourth Slide
+* Datensätze werden auf Instanzen aufgeteilt
+* Ein Shard kann auch ein Replica Set sein
 
-IMPORTANT: Something very important
+==== Aufbau
+
+image::images/sc.png[cluster]
+
+=== Replica Set
+
+* Kopie mehrerer MongoDB server instanzen
+* Hohe Verfügbarkeit und Redundanz
+
+==== Aufbau
+
+image::images/rs.png[cluster]
+
+==== Aufbau
+
+image::images/rs2.png[cluster]
