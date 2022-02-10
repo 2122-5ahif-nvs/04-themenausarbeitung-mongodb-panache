@@ -33,8 +33,8 @@ image::sc.png[]
 
 === Aufbau
 
-image::rs.png[]
+image::rs.png[width=80%]
 
 === Aufbau
 
-image::rs2.png[]
+image::rs2.png[width=80%]

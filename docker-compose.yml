@@ -1,4 +1,4 @@
-version: '2.2'
+version: "2.2"
 
 services:
   mongo1:
@@ -10,11 +10,11 @@ services:
     networks:
       - mongors-network
     ports:
-      - 27021:27017
+      - 27017:27017
     links:
       - mongo2
       - mongo3
-    restart: always
+    restart: "no"
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
   mongo2:
     container_name: mongo2

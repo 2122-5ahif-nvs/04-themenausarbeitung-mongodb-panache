@@ -22,6 +22,6 @@ var config = {
         }
     ]
 };
-rs.initiate(config, { force: true });
+rs.reconfig(config, {"force": true});
 rs.status();
 EOF
