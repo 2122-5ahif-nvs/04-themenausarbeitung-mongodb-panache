@@ -1,60 +1,267 @@
-# mongodb-panache Project
+# MongoDB with Panache (Cluster)
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+## Setup MongoDB Replica Set
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+### docker-compose.yml
+```dockerfile
+version: "2.2"
 
-## Running the application in dev mode
+services:
+  mongo1:
+    container_name: mongo1
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data1:/data/db
+      - ./rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - mongors-network
+    ports:
+      - 27017:27017
+    links:
+      - mongo2
+      - mongo3
+    restart: "no"
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo2:
+    container_name: mongo2
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data2:/data/db
+    networks:
+      - mongors-network
+    ports:
+      - 27022:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo3:
+    container_name: mongo3
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data3:/data/db
+    networks:
+      - mongors-network
+    ports:
+      - 27023:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+networks:
+  mongors-network:
+    driver: bridge
+    
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+### rs-init.sh
+```shell
+#!/bin/bash
 
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./mvnw package
+mongo <<EOF
+var config = {
+    "_id": "dbrs",
+    "version": 1,
+    "members": [
+        {
+            "_id": 1,
+            "host": "mongo1:27017",
+            "priority": 3
+        },
+        {
+            "_id": 2,
+            "host": "mongo2:27017",
+            "priority": 2
+        },
+        {
+            "_id": 3,
+            "host": "mongo3:27017",
+            "priority": 1
+        }
+    ]
+};
+rs.reconfig(config, {"force": true});
+rs.status();
+EOF
 ```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+### start-db.sh
+```shell
+#!/bin/bash
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+docker-compose up -d
 
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
+sleep 5
+
+docker exec mongo1 /scripts/rs-init.sh
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Pnative
+## start MongoDB Replica Set
+```shell
+./start-db.sh
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Pnative -Dquarkus.native.container-build=true
+Output
+```shell
+Creating network "04-themenausarbeitung-mongodb-panache_mongors-network" with driver "bridge"
+Creating mongo2 ... done
+Creating mongo3 ... done
+Creating mongo1 ... done
+MongoDB shell version v4.4.12
+connecting to: mongodb://127.0.0.1:27017/?compressors=disabled&gssapiServiceName=mongodb
+Implicit session: session { "id" : UUID("35320c2e-02b7-4882-8d34-c1da97ad8da6") }
+MongoDB server version: 4.4.12
+{
+        "ok" : 1,
+        "$clusterTime" : {
+                "clusterTime" : Timestamp(1644480913, 1),
+                "signature" : {
+                        "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+                        "keyId" : NumberLong(0)
+                }
+        },
+        "operationTime" : Timestamp(1644480657, 1)
+}
+{
+        "set" : "dbrs",
+        "date" : ISODate("2022-02-10T11:20:56.595Z"),
+        "myState" : 2,
+        "term" : NumberLong(94),
+        "syncSourceHost" : "",
+        "syncSourceId" : -1,
+        "heartbeatIntervalMillis" : NumberLong(2000),
+        "majorityVoteCount" : 2,
+        "writeMajorityCount" : 2,
+        "votingMembersCount" : 3,
+        "writableVotingMembersCount" : 3,
+        "optimes" : {
+                "lastCommittedOpTime" : {
+                        "ts" : Timestamp(0, 0),
+                        "t" : NumberLong(-1)
+                },
+                "lastCommittedWallTime" : ISODate("1970-01-01T00:00:00Z"),
+                "appliedOpTime" : {
+                        "ts" : Timestamp(1644480657, 1),
+                        "t" : NumberLong(92)
+                },
+                "durableOpTime" : {
+                        "ts" : Timestamp(1644480657, 1),
+                        "t" : NumberLong(92)
+                },
+                "lastAppliedWallTime" : ISODate("2022-02-10T08:10:57.037Z"),
+                "lastDurableWallTime" : ISODate("2022-02-10T08:10:57.037Z")
+        },
+        "lastStableRecoveryTimestamp" : Timestamp(1644480657, 1),
+        "members" : [
+                {
+                        "_id" : 1,
+                        "name" : "mongo1:27017",
+                        "health" : 1,
+                        "state" : 2,
+                        "stateStr" : "SECONDARY",
+                        "uptime" : 5,
+                        "optime" : {
+                                "ts" : Timestamp(1644480657, 1),
+                                "t" : NumberLong(92)
+                        },
+                        "optimeDate" : ISODate("2022-02-10T08:10:57Z"),
+                        "lastAppliedWallTime" : ISODate("2022-02-10T08:10:57.037Z"),
+                        "lastDurableWallTime" : ISODate("2022-02-10T08:10:57.037Z"),
+                        "syncSourceHost" : "",
+                        "syncSourceId" : -1,
+                        "infoMessage" : "",
+                        "configVersion" : 940893,
+                        "configTerm" : -1,
+                        "self" : true,
+                        "lastHeartbeatMessage" : ""
+                },
+                {
+                        "_id" : 2,
+                        "name" : "mongo2:27017",
+                        "health" : 1,
+                        "state" : 2,
+                        "stateStr" : "SECONDARY",
+                        "uptime" : 0,
+                        "optime" : {
+                                "ts" : Timestamp(1644480913, 1),
+                                "t" : NumberLong(93)
+                        },
+                        "optimeDurable" : {
+                                "ts" : Timestamp(1644480913, 1),
+                                "t" : NumberLong(93)
+                        },
+                        "optimeDate" : ISODate("2022-02-10T08:15:13Z"),
+                        "optimeDurableDate" : ISODate("2022-02-10T08:15:13Z"),
+                        "lastAppliedWallTime" : ISODate("2022-02-10T08:15:13.760Z"),
+                        "lastDurableWallTime" : ISODate("2022-02-10T08:15:13.760Z"),
+                        "lastHeartbeat" : ISODate("2022-02-10T11:20:56.594Z"),
+                        "lastHeartbeatRecv" : ISODate("1970-01-01T00:00:00Z"),
+                        "pingMs" : NumberLong(0),
+                        "lastHeartbeatMessage" : "",
+                        "syncSourceHost" : "",
+                        "syncSourceId" : -1,
+                        "infoMessage" : "",
+                        "configVersion" : 862820,
+                        "configTerm" : 93
+                },
+                {
+                        "_id" : 3,
+                        "name" : "mongo3:27017",
+                        "health" : 1,
+                        "state" : 2,
+                        "stateStr" : "SECONDARY",
+                        "uptime" : 0,
+                        "optime" : {
+                                "ts" : Timestamp(1644480913, 1),
+                                "t" : NumberLong(93)
+                        },
+                        "optimeDurable" : {
+                                "ts" : Timestamp(1644480913, 1),
+                                "t" : NumberLong(93)
+                        },
+                        "optimeDate" : ISODate("2022-02-10T08:15:13Z"),
+                        "optimeDurableDate" : ISODate("2022-02-10T08:15:13Z"),
+                        "lastAppliedWallTime" : ISODate("2022-02-10T08:15:13.760Z"),
+                        "lastDurableWallTime" : ISODate("2022-02-10T08:15:13.760Z"),
+                        "lastHeartbeat" : ISODate("2022-02-10T11:20:56.594Z"),
+                        "lastHeartbeatRecv" : ISODate("1970-01-01T00:00:00Z"),
+                        "pingMs" : NumberLong(0),
+                        "lastHeartbeatMessage" : "",
+                        "syncSourceHost" : "",
+                        "syncSourceId" : -1,
+                        "infoMessage" : "",
+                        "configVersion" : 862820,
+                        "configTerm" : 93
+                }
+        ],
+        "ok" : 1,
+        "$clusterTime" : {
+                "clusterTime" : Timestamp(1644480913, 1),
+                "signature" : {
+                        "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+                        "keyId" : NumberLong(0)
+                }
+        },
+        "operationTime" : Timestamp(1644480657, 1)
+}
+bye
+```
+## Start Quarkus
+```shell
+./mvnw clean compile quarkus:dev
 ```
 
-You can then execute your native executable with: `./target/mongodb-panache-1.0.0-SNAPSHOT-runner`
+### Execute http Request
+in the project root, navigate to [/request/demo.http](/request/demo.http)
+```http request
+GET http://localhost:8080/persons
+Accept: application/json
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
+###
 
-## Related Guides
+POST http://localhost:8080/persons
+Content-Type: application/json
 
-- RESTEasy JAX-RS ([guide](https://quarkus.io/guides/rest-json)): REST endpoint framework implementing JAX-RS and more
+{
+  "first": "daniel",
+  "last": "düsentrieb"
+}
 
-## Provided Code
-
-### RESTEasy JAX-RS
-
-Easily start your RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+###
+```
